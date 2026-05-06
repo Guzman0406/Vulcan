@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { servicesApi, notificationsApi } from '../services/api';
 import { ServiceRecord, SERVICE_LABELS } from '../types';
 import { Bell, Car, Send, CheckCircle } from 'lucide-react';
@@ -9,10 +9,12 @@ import toast from 'react-hot-toast';
 export default function Upcoming() {
   const queryClient = useQueryClient();
 
-  const { data: records = [], isLoading } = useQuery<ServiceRecord[]>({
+  const { data: recordsRaw, isLoading } = useQuery({
     queryKey: ['upcoming'],
     queryFn: servicesApi.getUpcoming,
   });
+
+  const records: ServiceRecord[] = Array.isArray(recordsRaw) ? recordsRaw : [];
 
   const sendReminder = async (id: string) => {
     const t = toast.loading('Enviando recordatorio...');
@@ -96,7 +98,6 @@ function RecordCard({ record, onSend }: { record: ServiceRecord; onSend: (id: st
             {record.vehicle?.marca} {record.vehicle?.modelo} · {SERVICE_LABELS[record.tipo_servicio]}
           </div>
         </div>
-
         <div className="text-right shrink-0">
           {fecha && (
             <div className={`text-xs font-medium ${overdue ? 'text-red-400' : 'text-amber-400'}`}>
@@ -110,7 +111,6 @@ function RecordCard({ record, onSend }: { record: ServiceRecord; onSend: (id: st
           )}
         </div>
       </div>
-
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted">
           {record.vehicle?.customer?.telefono}

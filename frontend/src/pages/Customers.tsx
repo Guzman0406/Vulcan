@@ -4,17 +4,17 @@ import { Link } from 'react-router-dom';
 import { customersApi } from '../services/api';
 import { Customer } from '../types';
 import { Search, Plus, ChevronRight, Car, Phone } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export default function Customers() {
   const [search, setSearch] = useState('');
 
-  const { data: customers = [], isLoading } = useQuery<Customer[]>({
+  const { data: customersRaw, isLoading } = useQuery({
     queryKey: ['customers', search],
     queryFn: () => customersApi.getAll(search || undefined),
     staleTime: 10_000,
   });
+
+  const customers: Customer[] = Array.isArray(customersRaw) ? customersRaw : [];
 
   return (
     <div className="space-y-4">
@@ -28,7 +28,6 @@ export default function Customers() {
         </Link>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
         <input
@@ -39,7 +38,6 @@ export default function Customers() {
         />
       </div>
 
-      {/* List */}
       {isLoading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -65,13 +63,11 @@ export default function Customers() {
               to={`/customers/${customer.id}`}
               className="card flex items-center gap-3 hover:border-surface-500 transition-colors active:scale-[0.99]"
             >
-              {/* Avatar */}
               <div className="w-9 h-9 rounded-full bg-surface-600 flex items-center justify-center shrink-0">
                 <span className="text-sm font-medium text-zinc-300">
                   {customer.nombre.charAt(0).toUpperCase()}
                 </span>
               </div>
-
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-white text-sm truncate">{customer.nombre}</div>
                 <div className="flex items-center gap-3 mt-0.5">
@@ -85,7 +81,6 @@ export default function Customers() {
                   )}
                 </div>
               </div>
-
               <ChevronRight size={16} className="text-zinc-700 shrink-0" />
             </Link>
           ))}
