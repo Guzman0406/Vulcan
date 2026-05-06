@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { Twilio } from 'twilio';
 import { ServiceRecordsService } from '../service-records/service-records.service';
 
@@ -9,6 +9,7 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly twilioClient: Twilio;
   private readonly fromNumber: string;
+  private readonly n8nWebhookUrl: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -17,23 +18,14 @@ export class NotificationsService {
     const sid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const token = this.configService.get<string>('TWILIO_AUTH_TOKEN');
     this.fromNumber = this.configService.get<string>('TWILIO_WHATSAPP_FROM');
-
+    this.n8nWebhookUrl = this.configService.get<string>('N8N_WEBHOOK_URL');
     if (sid && token) {
       this.twilioClient = new Twilio(sid, token);
-    } else {
-      this.logger.warn('Twilio no configurado — recordatorios deshabilitados');
     }
   }
 
   @Cron('0 9 * * *')
   async sendDailyReminders() {
-    this.logger.log('Ejecutando scheduler de recordatorios...');
-
-    if (!this.twilioClient) {
-      this.logger.warn('Twilio no configurado, saltando recordatorios');
-      return;
-    }
-
     const pendientes = await this.serviceRecordsService.findPendingReminders();
     this.logger.log(`Encontrados ${pendientes.length} recordatorios pendientes`);
 
@@ -41,86 +33,81 @@ export class NotificationsService {
       const customer = record.vehicle?.customer;
       if (!customer?.telefono) continue;
 
-      const mensaje = this.buildMessage(
-        customer.nombre,
-        record.vehicle.marca,
-        record.vehicle.modelo,
-        record.proximo_servicio_estimado,
-        record.tipo_servicio,
-      );
+      const payload = {
+        serviceRecordId: record.id,
+        nombre: customer.nombre,
+        telefono: customer.telefono,
+        marca: record.vehicle.marca,
+        modelo: record.vehicle.modelo,
+        tipo_servicio: record.tipo_servicio.replace(/_/g, ' '),
+        proximo_servicio: new Date(record.proximo_servicio_estimado).toLocaleDateString('es-MX', {
+          day: 'numeric', month: 'long', year: 'numeric',
+        }),
+      };
 
       try {
-        await this.twilioClient.messages.create({
-          from: this.fromNumber,
-          to: `whatsapp:+52${customer.telefono}`,
-          body: mensaje,
-        });
-
+        if (this.n8nWebhookUrl) {
+          await fetch(this.n8nWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          this.logger.log(`Enviado a N8n: ${customer.nombre}`);
+        } else {
+          await this.sendViaTwilio(customer.telefono, payload);
+        }
         await this.serviceRecordsService.markReminderSent(record.id);
-        this.logger.log(`Recordatorio enviado a ${customer.nombre} (${customer.telefono})`);
       } catch (error) {
-        this.logger.error(
-          `Error enviando a ${customer.telefono}: ${error.message}`,
-        );
+        this.logger.error(`Error: ${error.message}`);
       }
     }
   }
 
   async sendManualReminder(serviceRecordId: string): Promise<{ success: boolean; message: string }> {
-    if (!this.twilioClient) {
-      return { success: false, message: 'Twilio no configurado' };
-    }
-
     const record = await this.serviceRecordsService.findOne(serviceRecordId);
     const customer = record.vehicle?.customer;
+    if (!customer?.telefono) return { success: false, message: 'Sin teléfono' };
 
-    if (!customer?.telefono) {
-      return { success: false, message: 'Cliente sin teléfono registrado' };
-    }
-
-    const mensaje = this.buildMessage(
-      customer.nombre,
-      record.vehicle.marca,
-      record.vehicle.modelo,
-      record.proximo_servicio_estimado,
-      record.tipo_servicio,
-    );
+    const payload = {
+      serviceRecordId: record.id,
+      nombre: customer.nombre,
+      telefono: customer.telefono,
+      marca: record.vehicle.marca,
+      modelo: record.vehicle.modelo,
+      tipo_servicio: record.tipo_servicio.replace(/_/g, ' '),
+      proximo_servicio: record.proximo_servicio_estimado
+        ? new Date(record.proximo_servicio_estimado).toLocaleDateString('es-MX', {
+            day: 'numeric', month: 'long', year: 'numeric',
+          })
+        : 'próximamente',
+    };
 
     try {
-      await this.twilioClient.messages.create({
-        from: this.fromNumber,
-        to: `whatsapp:+52${customer.telefono}`,
-        body: mensaje,
-      });
-
-      await this.serviceRecordsService.markReminderSent(record.id);
-      return { success: true, message: `Recordatorio enviado a ${customer.nombre}` };
+      if (this.n8nWebhookUrl) {
+        await fetch(this.n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        await this.serviceRecordsService.markReminderSent(record.id);
+        return { success: true, message: `Recordatorio enviado a ${customer.nombre}` };
+      } else {
+        await this.sendViaTwilio(customer.telefono, payload);
+        await this.serviceRecordsService.markReminderSent(record.id);
+        return { success: true, message: `Recordatorio enviado a ${customer.nombre}` };
+      }
     } catch (error) {
       return { success: false, message: error.message };
     }
   }
 
-  private buildMessage(
-    nombre: string,
-    marca: string,
-    modelo: string,
-    fecha: Date,
-    tipo: string,
-  ): string {
-    const fechaStr = new Date(fecha).toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+  private async sendViaTwilio(telefono: string, payload: any) {
+    if (!this.twilioClient) return;
+    const mensaje = `Hola ${payload.nombre} 👋\n\nTe recordamos que tu *${payload.marca} ${payload.modelo}* tiene programado un servicio de *${payload.tipo_servicio}* aproximadamente el *${payload.proximo_servicio}*.\n\n📍 Visítanos en nuestra vulcanizadora.\n\n_Mensaje automático._`;
+    await this.twilioClient.messages.create({
+      from: this.fromNumber,
+      to: `whatsapp:+52${telefono}`,
+      body: mensaje,
     });
-
-    const tipoLabel = tipo.replace(/_/g, ' ');
-
-    return (
-      `Hola ${nombre} 👋\n\n` +
-      `Te recordamos que tu *${marca} ${modelo}* tiene programado un servicio de *${tipoLabel}* ` +
-      `aproximadamente el *${fechaStr}*.\n\n` +
-      `📍 Visítanos en nuestra vulcanizadora. Con gusto te atendemos.\n\n` +
-      `_Este es un mensaje automático. Responde este mensaje si deseas agendar._`
-    );
   }
 }
