@@ -54,11 +54,10 @@ export default function CustomerDetail() {
     </div>
   );
 
-  const initials = customer.nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+  const initials = customer.nombre.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div className="space-y-stack-lg pb-32">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
@@ -67,14 +66,13 @@ export default function CustomerDetail() {
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <button
-          onClick={() => confirm('¿Eliminar este cliente y todos sus registros?') && deleteMutation.mutate()}
+          onClick={() => confirm('Eliminar este cliente y todos sus registros?') && deleteMutation.mutate()}
           className="w-touch-target-min h-touch-target-min flex items-center justify-center text-error hover:bg-error-container rounded-full transition-colors"
         >
           <span className="material-symbols-outlined">delete</span>
         </button>
       </div>
 
-      {/* Profile */}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex items-center gap-stack-md">
         <div className="w-20 h-20 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[28px] font-bold shrink-0">
           {initials}
@@ -97,7 +95,6 @@ export default function CustomerDetail() {
         </div>
       </div>
 
-      {/* Notas */}
       {customer.notas && (
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md">
           <div className="flex items-start gap-2">
@@ -107,7 +104,6 @@ export default function CustomerDetail() {
         </div>
       )}
 
-      {/* Vehicles */}
       <div className="space-y-stack-md">
         <div className="flex items-center justify-between">
           <h2 className="text-headline-md text-on-surface flex items-center gap-2">
@@ -115,7 +111,7 @@ export default function CustomerDetail() {
             Vehículos
           </h2>
           <Link
-            to={`/services/new?customerId=${customer.id}&addVehicle=true`}
+            to={"/services/new?customerId=" + customer.id + "&addVehicle=true"}
             className="text-label-lg text-primary flex items-center gap-1"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
@@ -128,7 +124,7 @@ export default function CustomerDetail() {
             Sin vehículos registrados
           </div>
         ) : (
-          customer.vehicles.map((vehicle) => (
+          customer.vehicles.map((vehicle: Vehicle) => (
             <VehicleCard
               key={vehicle.id}
               vehicle={vehicle}
@@ -140,10 +136,9 @@ export default function CustomerDetail() {
         )}
       </div>
 
-      {/* Fixed Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant p-margin-mobile z-50 flex gap-stack-md">
-        
-          href={`https://wa.me/52${customer.telefono}`}
+        <a
+          href={"https://wa.me/52" + customer.telefono}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 h-[56px] flex items-center justify-center gap-2 text-label-lg text-primary border border-primary rounded-lg hover:bg-surface-container-low transition-colors"
@@ -152,7 +147,7 @@ export default function CustomerDetail() {
           WhatsApp
         </a>
         <Link
-          to={`/services/new?customerId=${customer.id}`}
+          to={"/services/new?customerId=" + customer.id}
           className="flex-1 h-[56px] flex items-center justify-center gap-2 text-label-lg bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
@@ -180,8 +175,8 @@ function VehicleCard({ vehicle, expanded, onToggle, onSendReminder }: {
             <div className="text-headline-md text-on-surface">{vehicle.marca} {vehicle.modelo}</div>
             <div className="text-body-md text-on-surface-variant">
               {vehicle.año}
-              {vehicle.placa && ` · ${vehicle.placa}`}
-              {vehicle.color && ` · ${vehicle.color}`}
+              {vehicle.placa && ' · ' + vehicle.placa}
+              {vehicle.color && ' · ' + vehicle.color}
             </div>
           </div>
         </div>
@@ -199,7 +194,7 @@ function VehicleCard({ vehicle, expanded, onToggle, onSendReminder }: {
           {!vehicle.serviceRecords || vehicle.serviceRecords.length === 0 ? (
             <p className="text-body-md text-on-surface-variant text-center py-4">Sin servicios registrados</p>
           ) : (
-            vehicle.serviceRecords.map((record) => (
+            vehicle.serviceRecords.map((record: ServiceRecord) => (
               <ServiceRow key={record.id} record={record} onSendReminder={onSendReminder} />
             ))
           )}
@@ -232,7 +227,7 @@ function ServiceRow({ record, onSendReminder }: { record: ServiceRecord; onSendR
       {record.proximo_servicio_estimado && (
         <div className="text-label-sm text-secondary flex items-center gap-1">
           <span className="material-symbols-outlined" style={{ fontSize: 14 }}>calendar_today</span>
-          Próx: {format(parseISO(record.proximo_servicio_estimado), 'd MMM yyyy', { locale: es })}
+          {'Prox: ' + format(parseISO(record.proximo_servicio_estimado), 'd MMM yyyy', { locale: es })}
           {record.recordatorio_enviado && (
             <span className="ml-2 text-primary flex items-center gap-0.5">
               <span className="material-symbols-outlined" style={{ fontSize: 12, fontVariationSettings: "'FILL' 1" }}>check_circle</span>

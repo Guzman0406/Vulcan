@@ -105,27 +105,21 @@ function RecordCard({ record, onSend }: { record: ServiceRecord; onSend: (id: st
 
       <div className="flex justify-between items-start pl-2">
         <div>
-          <h3 className="text-headline-md text-on-surface">
-            {record.vehicle?.customer?.nombre}
-          </h3>
+          <h3 className="text-headline-md text-on-surface">{record.vehicle?.customer?.nombre}</h3>
           <div className="flex items-center gap-1 text-body-md text-on-surface-variant mt-1">
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>directions_car</span>
             {record.vehicle?.marca} {record.vehicle?.modelo}
           </div>
         </div>
         {fecha && (
-          <div className={`text-label-sm px-2 py-1 rounded-md flex items-center gap-1 border ${
-            isOverdue
-              ? 'bg-error-container text-error border-error'
-              : 'bg-surface-container-high text-on-surface border-outline-variant'
-          }`}>
+          <div className={`text-label-sm px-2 py-1 rounded-md flex items-center gap-1 border ${isOverdue ? 'bg-error-container text-error border-error' : 'bg-surface-container-high text-on-surface border-outline-variant'}`}>
             <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
               {isOverdue ? 'warning' : 'calendar_today'}
             </span>
             {isOverdue
-              ? `${Math.abs(daysLeft ?? 0)}d vencido`
+              ? Math.abs(daysLeft ?? 0) + 'd vencido'
               : daysLeft === 0 ? 'Hoy'
-              : `En ${daysLeft}d`}
+              : 'En ' + daysLeft + 'd'}
           </div>
         )}
       </div>
@@ -148,7 +142,9 @@ function RecordCard({ record, onSend }: { record: ServiceRecord; onSend: (id: st
       <div className="flex gap-2 pl-2">
         {record.recordatorio_enviado ? (
           <div className="flex-1 h-12 bg-surface-container-lowest border border-outline-variant text-on-surface-variant rounded-lg flex items-center justify-center gap-2 text-label-lg opacity-80">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            <span className="material-symbols-outlined text-primary" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>
+              check_circle
+            </span>
             Recordatorio enviado
           </div>
         ) : (
@@ -163,8 +159,8 @@ function RecordCard({ record, onSend }: { record: ServiceRecord; onSend: (id: st
             Enviar WhatsApp
           </button>
         )}
-        
-          href={`tel:${record.vehicle?.customer?.telefono}`}
+        <a
+          href={"tel:" + record.vehicle?.customer?.telefono}
           className="w-12 h-12 bg-surface text-primary border border-outline-variant rounded-lg flex items-center justify-center hover:bg-surface-container-low transition-colors"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 22 }}>call</span>

@@ -110,4 +110,52 @@ export default function NewCustomer() {
                 placeholder="ejemplo@correo.com"
                 type="email"
                 {...register('email', {
-                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email invá
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' }
+                })}
+              />
+            </div>
+            {errors.email && (
+              <p className="text-label-sm text-error mt-1">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Notas */}
+          <div>
+            <label className="block text-label-lg text-on-surface-variant mb-stack-sm">
+              Notas <span className="text-body-md text-outline font-normal">(Opcional)</span>
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-3 text-outline" style={{ fontSize: 22 }}>
+                notes
+              </span>
+              <textarea
+                className="w-full pl-11 pr-stack-md py-3 rounded-lg border border-outline-variant bg-surface text-on-surface text-body-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-outline resize-none"
+                placeholder="Información adicional del cliente..."
+                rows={4}
+                {...register('notas')}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant p-margin-mobile z-50 flex gap-stack-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex-1 h-[56px] rounded-lg border border-outline-variant text-on-surface-variant text-label-lg hover:bg-surface-container-low transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 h-[56px] rounded-lg bg-primary text-on-primary text-label-lg hover:bg-surface-tint transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? 'Guardando...' : 'Guardar cliente'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
