@@ -35,7 +35,7 @@ export default function Dashboard() {
     { label: 'Recordatorios', value: stats?.recordatoriosPendientes ?? '—', icon: Bell, color: 'text-amber-400' },
     {
       label: 'Ingresos mes',
-      value: stats ? `$${stats.ingresosMes.toLocaleString('es-MX', { minimumFractionDigits: 0 })}` : '—',
+      value: stats ? `$${(stats.ingresosMes ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 0 })}` : '—',
       icon: TrendingUp,
       color: 'text-emerald-400',
     },
