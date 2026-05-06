@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { customersApi } from '../services/api';
-import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface FormData {
@@ -29,71 +28,86 @@ export default function NewCustomer() {
   });
 
   const onSubmit = (data: FormData) => {
-    const clean = { ...data, telefono: data.telefono.replace(/\D/g, '') };
-    mutation.mutate(clean);
+    mutation.mutate({ ...data, telefono: data.telefono.replace(/\D/g, '') });
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost p-2">
-          <ArrowLeft size={18} />
+    <div className="space-y-stack-lg">
+      {/* Header */}
+      <div className="flex items-center gap-stack-md">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-touch-target-min h-touch-target-min flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="text-xl font-semibold text-white">Nuevo cliente</h1>
+        <h1 className="text-headline-lg text-on-background">Nuevo cliente</h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="label">Nombre completo *</label>
-          <input
-            className="input"
-            placeholder="Juan Pérez"
-            {...register('nombre', { required: 'El nombre es requerido', minLength: { value: 2, message: 'Mínimo 2 caracteres' } })}
-          />
-          {errors.nombre && <p className="text-red-400 text-xs mt-1">{errors.nombre.message}</p>}
-        </div>
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-stack-md">
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md space-y-stack-md">
 
-        <div>
-          <label className="label">Teléfono * (10 dígitos)</label>
-          <input
-            className="input"
-            placeholder="9611234567"
-            type="tel"
-            inputMode="numeric"
-            {...register('telefono', {
-              required: 'El teléfono es requerido',
-              pattern: { value: /^\d{10}$/, message: 'Debe tener 10 dígitos' },
-            })}
-          />
-          {errors.telefono && <p className="text-red-400 text-xs mt-1">{errors.telefono.message}</p>}
-        </div>
+          {/* Nombre */}
+          <div>
+            <label className="block text-label-lg text-on-surface-variant mb-stack-sm">
+              Nombre completo *
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: 22 }}>
+                person
+              </span>
+              <input
+                className="w-full h-[56px] pl-11 pr-stack-md rounded-lg border border-outline-variant bg-surface text-on-surface text-body-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-outline"
+                placeholder="Ej. Juan Pérez"
+                {...register('nombre', {
+                  required: 'El nombre es requerido',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
+              />
+            </div>
+            {errors.nombre && (
+              <p className="text-label-sm text-error mt-1">{errors.nombre.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="label">Email (opcional)</label>
-          <input
-            className="input"
-            placeholder="juan@email.com"
-            type="email"
-            {...register('email', {
-              pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' },
-            })}
-          />
-          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
-        </div>
+          {/* Teléfono */}
+          <div>
+            <label className="block text-label-lg text-on-surface-variant mb-stack-sm">
+              Teléfono * (10 dígitos)
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: 22 }}>
+                phone
+              </span>
+              <input
+                className="w-full h-[56px] pl-11 pr-stack-md rounded-lg border border-outline-variant bg-surface text-on-surface text-body-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-outline"
+                placeholder="9611234567"
+                type="tel"
+                inputMode="numeric"
+                {...register('telefono', {
+                  required: 'El teléfono es requerido',
+                  pattern: { value: /^\d{10}$/, message: 'Debe tener 10 dígitos' }
+                })}
+              />
+            </div>
+            {errors.telefono && (
+              <p className="text-label-sm text-error mt-1">{errors.telefono.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="label">Notas (opcional)</label>
-          <textarea
-            className="input min-h-[80px] resize-none"
-            placeholder="Notas sobre el cliente..."
-            {...register('notas')}
-          />
-        </div>
-
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center">
-          {isSubmitting ? 'Guardando...' : 'Registrar cliente'}
-        </button>
-      </form>
-    </div>
-  );
-}
+          {/* Email */}
+          <div>
+            <label className="block text-label-lg text-on-surface-variant mb-stack-sm">
+              Email <span className="text-body-md text-outline font-normal">(Opcional)</span>
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: 22 }}>
+                mail
+              </span>
+              <input
+                className="w-full h-[56px] pl-11 pr-stack-md rounded-lg border border-outline-variant bg-surface text-on-surface text-body-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-outline"
+                placeholder="ejemplo@correo.com"
+                type="email"
+                {...register('email', {
+                  pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email invá

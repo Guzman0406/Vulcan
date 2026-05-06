@@ -3,9 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customersApi, notificationsApi } from '../services/api';
 import { Customer, Vehicle, ServiceRecord, SERVICE_LABELS } from '../types';
-import {
-  ArrowLeft, Phone, Car, Wrench, Plus, Send, ChevronDown, ChevronUp, Trash2
-} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -44,81 +41,90 @@ export default function CustomerDetail() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-8 w-32 bg-surface-700 rounded animate-pulse" />
-        <div className="card h-24 animate-pulse bg-surface-700" />
-        <div className="card h-48 animate-pulse bg-surface-700" />
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 bg-surface-container rounded-xl animate-pulse" />
+        ))}
       </div>
     );
   }
 
-  if (!customer) return <div className="text-muted text-sm">Cliente no encontrado</div>;
+  if (!customer) return (
+    <div className="text-center py-16 text-on-surface-variant text-body-lg">
+      Cliente no encontrado
+    </div>
+  );
+
+  const initials = customer.nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-stack-lg pb-32">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost p-2">
-          <ArrowLeft size={18} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-white truncate">{customer.nombre}</h1>
-          <div className="flex items-center gap-1 text-xs text-muted">
-            <Phone size={10} /> {customer.telefono}
-          </div>
-        </div>
+      <div className="flex items-center justify-between">
         <button
-          onClick={() => {
-            if (confirm('¿Eliminar este cliente y todos sus registros?')) {
-              deleteMutation.mutate();
-            }
-          }}
-          className="btn-danger p-2"
+          onClick={() => navigate(-1)}
+          className="w-touch-target-min h-touch-target-min flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"
         >
-          <Trash2 size={15} />
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <button
+          onClick={() => confirm('¿Eliminar este cliente y todos sus registros?') && deleteMutation.mutate()}
+          className="w-touch-target-min h-touch-target-min flex items-center justify-center text-error hover:bg-error-container rounded-full transition-colors"
+        >
+          <span className="material-symbols-outlined">delete</span>
         </button>
       </div>
 
-      {/* Info card */}
-      <div className="card space-y-2">
-        {customer.email && (
-          <div className="text-xs text-muted">
-            <span className="text-zinc-500">Email:</span> {customer.email}
+      {/* Profile */}
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex items-center gap-stack-md">
+        <div className="w-20 h-20 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[28px] font-bold shrink-0">
+          {initials}
+        </div>
+        <div>
+          <h1 className="text-headline-lg text-on-surface">{customer.nombre}</h1>
+          <div className="flex items-center gap-1 text-body-lg text-on-surface-variant mt-1">
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>phone</span>
+            {customer.telefono}
           </div>
-        )}
-        {customer.notas && (
-          <div className="text-xs text-zinc-400 bg-surface-700 rounded-lg p-3">
-            {customer.notas}
+          {customer.email && (
+            <div className="flex items-center gap-1 text-body-md text-on-surface-variant mt-0.5">
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>mail</span>
+              {customer.email}
+            </div>
+          )}
+          <div className="text-label-sm text-on-surface-variant mt-1">
+            Cliente desde {format(parseISO(customer.fecha_registro), 'MMMM yyyy', { locale: es })}
           </div>
-        )}
-        <div className="text-xs text-muted">
-          Cliente desde {format(parseISO(customer.fecha_registro), 'MMMM yyyy', { locale: es })}
         </div>
       </div>
 
-      {/* Add service link */}
-      <Link
-        to={`/services/new?customerId=${customer.id}`}
-        className="btn-primary w-full justify-center"
-      >
-        <Plus size={15} /> Registrar servicio
-      </Link>
+      {/* Notas */}
+      {customer.notas && (
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md">
+          <div className="flex items-start gap-2">
+            <span className="material-symbols-outlined text-outline mt-1" style={{ fontSize: 18 }}>notes</span>
+            <p className="text-body-md text-on-surface-variant">{customer.notas}</p>
+          </div>
+        </div>
+      )}
 
       {/* Vehicles */}
-      <div className="space-y-2">
+      <div className="space-y-stack-md">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-white flex items-center gap-1.5">
-            <Car size={14} className="text-zinc-500" /> Vehículos
+          <h2 className="text-headline-md text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-outline" style={{ fontSize: 20 }}>directions_car</span>
+            Vehículos
           </h2>
           <Link
             to={`/services/new?customerId=${customer.id}&addVehicle=true`}
-            className="text-xs text-brand-500"
+            className="text-label-lg text-primary flex items-center gap-1"
           >
-            + Agregar vehículo
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
+            Agregar
           </Link>
         </div>
 
         {!customer.vehicles || customer.vehicles.length === 0 ? (
-          <div className="card text-center py-6 text-sm text-muted">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg text-center text-body-lg text-on-surface-variant">
             Sin vehículos registrados
           </div>
         ) : (
@@ -127,54 +133,71 @@ export default function CustomerDetail() {
               key={vehicle.id}
               vehicle={vehicle}
               expanded={expandedVehicle === vehicle.id}
-              onToggle={() =>
-                setExpandedVehicle(expandedVehicle === vehicle.id ? null : vehicle.id)
-              }
+              onToggle={() => setExpandedVehicle(expandedVehicle === vehicle.id ? null : vehicle.id)}
               onSendReminder={sendReminder}
             />
           ))
         )}
       </div>
+
+      {/* Fixed Bottom Actions */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant p-margin-mobile z-50 flex gap-stack-md">
+        
+          href={`https://wa.me/52${customer.telefono}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 h-[56px] flex items-center justify-center gap-2 text-label-lg text-primary border border-primary rounded-lg hover:bg-surface-container-low transition-colors"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>chat</span>
+          WhatsApp
+        </a>
+        <Link
+          to={`/services/new?customerId=${customer.id}`}
+          className="flex-1 h-[56px] flex items-center justify-center gap-2 text-label-lg bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_circle</span>
+          Registrar servicio
+        </Link>
+      </div>
     </div>
   );
 }
 
-function VehicleCard({
-  vehicle, expanded, onToggle, onSendReminder,
-}: {
+function VehicleCard({ vehicle, expanded, onToggle, onSendReminder }: {
   vehicle: Vehicle;
   expanded: boolean;
   onToggle: () => void;
   onSendReminder: (id: string) => void;
 }) {
   return (
-    <div className="card space-y-3">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between text-left"
-      >
-        <div>
-          <div className="text-sm font-medium text-white">
-            {vehicle.marca} {vehicle.modelo}
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+      <button onClick={onToggle} className="w-full flex items-center justify-between p-stack-md hover:bg-surface-container-low transition-colors">
+        <div className="flex items-center gap-stack-md">
+          <div className="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center">
+            <span className="material-symbols-outlined text-on-surface-variant">directions_car</span>
           </div>
-          <div className="text-xs text-muted">
-            {vehicle.año} {vehicle.placa && `· ${vehicle.placa}`} {vehicle.color && `· ${vehicle.color}`}
+          <div className="text-left">
+            <div className="text-headline-md text-on-surface">{vehicle.marca} {vehicle.modelo}</div>
+            <div className="text-body-md text-on-surface-variant">
+              {vehicle.año}
+              {vehicle.placa && ` · ${vehicle.placa}`}
+              {vehicle.color && ` · ${vehicle.color}`}
+            </div>
           </div>
         </div>
-        {expanded ? (
-          <ChevronUp size={16} className="text-zinc-600" />
-        ) : (
-          <ChevronDown size={16} className="text-zinc-600" />
-        )}
+        <span className="material-symbols-outlined text-outline-variant">
+          {expanded ? 'expand_less' : 'expand_more'}
+        </span>
       </button>
 
       {expanded && (
-        <div className="space-y-2 pt-2 border-t border-surface-600">
-          <h3 className="text-xs font-medium text-zinc-500 flex items-center gap-1">
-            <Wrench size={11} /> Historial de servicios
+        <div className="border-t border-outline-variant p-stack-md space-y-stack-sm">
+          <h3 className="text-label-lg text-on-surface-variant flex items-center gap-1">
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>build</span>
+            Historial de servicios
           </h3>
           {!vehicle.serviceRecords || vehicle.serviceRecords.length === 0 ? (
-            <div className="text-xs text-muted text-center py-3">Sin servicios registrados</div>
+            <p className="text-body-md text-on-surface-variant text-center py-4">Sin servicios registrados</p>
           ) : (
             vehicle.serviceRecords.map((record) => (
               <ServiceRow key={record.id} record={record} onSendReminder={onSendReminder} />
@@ -186,44 +209,40 @@ function VehicleCard({
   );
 }
 
-function ServiceRow({
-  record, onSendReminder,
-}: {
-  record: ServiceRecord;
-  onSendReminder: (id: string) => void;
-}) {
+function ServiceRow({ record, onSendReminder }: { record: ServiceRecord; onSendReminder: (id: string) => void }) {
   return (
-    <div className="bg-surface-700 rounded-lg p-3 space-y-1.5">
+    <div className="bg-surface-container rounded-lg p-stack-md space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-xs font-medium text-white">
-            {SERVICE_LABELS[record.tipo_servicio]}
-          </div>
-          <div className="text-xs text-muted">
-            {format(parseISO(record.fecha_servicio), 'd MMM yyyy', { locale: es })} · $
-            {Number(record.costo).toLocaleString('es-MX')}
+          <div className="text-label-lg text-on-surface">{SERVICE_LABELS[record.tipo_servicio]}</div>
+          <div className="text-body-md text-on-surface-variant">
+            {format(parseISO(record.fecha_servicio), 'd MMM yyyy', { locale: es })} · ${Number(record.costo).toLocaleString('es-MX')}
           </div>
         </div>
         {record.proximo_servicio_estimado && !record.recordatorio_enviado && (
           <button
             onClick={() => onSendReminder(record.id)}
-            className="shrink-0 flex items-center gap-1 text-[10px] text-brand-500 bg-brand-500/10 rounded px-2 py-1"
+            className="shrink-0 flex items-center gap-1 text-label-sm text-primary bg-primary-container px-2 py-1 rounded"
           >
-            <Send size={10} /> Avisar
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>send</span>
+            Avisar
           </button>
         )}
       </div>
-
       {record.proximo_servicio_estimado && (
-        <div className="text-[10px] text-amber-400">
+        <div className="text-label-sm text-secondary flex items-center gap-1">
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>calendar_today</span>
           Próx: {format(parseISO(record.proximo_servicio_estimado), 'd MMM yyyy', { locale: es })}
           {record.recordatorio_enviado && (
-            <span className="ml-2 text-brand-500">· Recordatorio enviado</span>
+            <span className="ml-2 text-primary flex items-center gap-0.5">
+              <span className="material-symbols-outlined" style={{ fontSize: 12, fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              Recordatorio enviado
+            </span>
           )}
         </div>
       )}
       {record.descripcion && (
-        <div className="text-[10px] text-zinc-500">{record.descripcion}</div>
+        <div className="text-body-md text-on-surface-variant">{record.descripcion}</div>
       )}
     </div>
   );
