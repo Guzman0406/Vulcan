@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { servicesApi, notificationsApi } from '../services/api';
+import { servicesApi } from '../services/api';
 import { DashboardStats, ServiceRecord, SERVICE_LABELS } from '../types';
-import { Users, Wrench, Bell, TrendingUp, Send, ChevronRight } from 'lucide-react';
+import { Users, Wrench, Bell, TrendingUp, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -20,16 +19,6 @@ export default function Dashboard() {
   });
 
   const upcoming: ServiceRecord[] = Array.isArray(upcomingRaw) ? upcomingRaw : [];
-
-  const handleRunScheduler = async () => {
-    const t = toast.loading('Enviando recordatorios...');
-    try {
-      await notificationsApi.runScheduler();
-      toast.success('Recordatorios enviados', { id: t });
-    } catch (e: any) {
-      toast.error(e.message, { id: t });
-    }
-  };
 
   const statCards = [
     { label: 'Clientes', value: stats?.totalClientes ?? '—', icon: Users, color: 'text-blue-400' },
@@ -64,10 +53,6 @@ export default function Dashboard() {
         <Link to="/customers/new" className="btn-primary flex-1 justify-center">
           <Users size={15} /> Nuevo cliente
         </Link>
-        <button onClick={handleRunScheduler} className="btn-ghost border border-surface-500">
-          <Send size={15} />
-          Recordatorios
-        </button>
       </div>
 
       {upcoming.length > 0 && (
