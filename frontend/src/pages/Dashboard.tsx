@@ -14,10 +14,12 @@ export default function Dashboard() {
     refetchInterval: 60_000,
   });
 
-  const { data: upcoming = [] } = useQuery<ServiceRecord[]>({
+  const { data: upcomingRaw } = useQuery({
     queryKey: ['upcoming'],
     queryFn: servicesApi.getUpcoming,
   });
+
+  const upcoming: ServiceRecord[] = Array.isArray(upcomingRaw) ? upcomingRaw : [];
 
   const handleRunScheduler = async () => {
     const t = toast.loading('Enviando recordatorios...');
@@ -48,7 +50,6 @@ export default function Dashboard() {
         <p className="text-xs text-muted mt-0.5">Resumen del negocio</p>
       </div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         {statCards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="stat-card">
@@ -59,7 +60,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Quick actions */}
       <div className="flex gap-2">
         <Link to="/customers/new" className="btn-primary flex-1 justify-center">
           <Users size={15} /> Nuevo cliente
@@ -70,7 +70,6 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Upcoming services */}
       {upcoming.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
